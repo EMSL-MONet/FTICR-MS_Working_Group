@@ -3,7 +3,7 @@
 This repository is associated with the MONet FTICR-MS Working Groups. The group meeds evry couple of months to discuss aspects relevant to the MONet FTICR-MS data. Previous meeting notes can be found below: 
 
 - [1st Meeting](https://docs.google.com/document/d/15DrfB0v37DV6GHypqEag2GR10p4T9B8fnFXNGqWQeWs/edit?usp=sharing)
-- [2nd Meeting] (https://docs.google.com/document/d/1BHU38LBqNfUzyalSOlNTanhcArzzrk5xeclM5rpWVGQ/edit?usp=sharing)
+- [2nd Meeting](https://docs.google.com/document/d/1BHU38LBqNfUzyalSOlNTanhcArzzrk5xeclM5rpWVGQ/edit?usp=sharing)
 - [3rd Meeting](https://docs.google.com/document/d/1736ojDIpeTB9uV4Lf2dVZ8b8hDEphxd_ypKWU6AfR68/edit?usp=sharing)
 
 The group has been using the MONet 1000 Soils pilot as a test case for FTICR-MS applications. The 1000 Soils data used can be found on the Input_Data folder or be downloaded [here](https://zenodo.org/records/10888508). 
