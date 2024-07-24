@@ -1,0 +1,36 @@
+Site_Code,field_dominant_nlcd_classes,
+KONA,Cultivated Crops,Crop
+STER,Cultivated Crops,Crop
+SERC,Cultivated Crops|Deciduous Forest,Forest
+JERC,Cultivated Crops|Deciduous Forest|Evergreen Forest|Mixed Forest,Forest
+MLBS,Deciduous Forest,Forest
+GRSM,Deciduous Forest|Evergreen Forest,Forest
+TALL,Deciduous Forest|Evergreen Forest|Mixed Forest,Forest
+HARV,Deciduous Forest|Evergreen Forest|Mixed Forest|Woody Wetlands,Forest
+TREE,Deciduous Forest|Evergreen Forest|Mixed Forest|Woody Wetlands,Forest
+ORNL,Deciduous Forest|Evergreen Forest|Pasture/Hay,Forest
+SCBI,Deciduous Forest|Evergreen Forest|Pasture/Hay,Forest
+CLBJ,Deciduous Forest|Grassland/Herbaceous,Forest
+KONZ,Deciduous Forest|Grassland/Herbaceous,Shrub_Grassland
+STEI,Deciduous Forest|Mixed Forest|Woody Wetlands,Forest
+UNDE,Deciduous Forest|Mixed Forest|Woody Wetlands,Forest
+BLAN,Deciduous Forest|Pasture/Hay,Pasture
+UKFS,Deciduous Forest|Pasture/Hay,Forest
+LENO,Deciduous Forest|Woody Wetlands,Wetlands
+OSBS,Emergent Herbaceous Wetlands|Evergreen Forest|Woody Wetlands,Wetlands
+WOOD,Emergent Herbaceous Wetlands|Grassland/Herbaceous,Shrub_Grassland
+PUUM,Evergreen Forest,Forest
+RMNP,Evergreen Forest,Forest
+WREF,Evergreen Forest,Forest
+NIWO,Evergreen Forest|Grassland/Herbaceous,Shrub_Grassland
+SJER,Evergreen Forest|Grassland/Herbaceous|Shrub/Scrub,Shrub_Grassland
+MOAB,Evergreen Forest|Shrub/Scrub,Shrub_Grassland
+ONAQ,Evergreen Forest|Shrub/Scrub,Shrub_Grassland
+SOAP,Evergreen Forest|Shrub/Scrub,Forest
+DELA,Evergreen Forest|Woody Wetlands,Forest
+CPER,Grassland/Herbaceous,Shrub_Grassland
+DCFS,Grassland/Herbaceous,Shrub_Grassland
+NOGP,Grassland/Herbaceous,Shrub_Grassland
+DSNY,Pasture/Hay|Woody Wetlands,Shrub_Grassland
+JORN,Shrub/Scrub,Shrub_Grassland
+SRER,Shrub/Scrub,Shrub_Grassland
