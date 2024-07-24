@@ -12,4 +12,6 @@ We re-using this data please cite as follows:
 Maggie M. Bowman, Alexis E. Heath, Tamas Varga, Anil K. Battu, Will Kew, Cheng Shi, Rosey Chu, Jason Toyoda, Odeta Qafoku, John Bargar, Nancy Hess, Sarah Leichty, Andrew Townsend, Nick Sconzo, Patricia Miller, James Anderson, Izabel Stohel, MIchael Rosenstock, Albert Lawver, … Emily B. Graham. (2024). 1000 Soils Pilot Dataset, version 6, March 2024 [Data set]. Zenodo. https://doi.org/10.5281/zenodo.10888508
 
 For questions about the 1000 Soils dataset, contact Emily Graham. 
-For questions regarding MONet working grouos, contact Vanessa Garayburu-Caruso and Odeta Qafoku.
+
+
+For questions regarding MONet working groups, contact Vanessa Garayburu-Caruso and Odeta Qafoku.
