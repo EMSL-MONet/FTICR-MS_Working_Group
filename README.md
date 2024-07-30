@@ -1,6 +1,6 @@
 # FTICR-MS_Working_Group
 
-This repository is associated with the MONet FTICR-MS Working Groups. The group meets every couple of months to discuss topics associated with MONet FTICR-MS data. Previous meeting notes can be found below: 
+This repository is associated with the 2024 MONet FTICR-MS Working Groups. The group meets every couple of months to discuss topics associated with MONet FTICR-MS data. Previous meeting notes can be found below: 
 
 - [1st Meeting](https://docs.google.com/document/d/15DrfB0v37DV6GHypqEag2GR10p4T9B8fnFXNGqWQeWs/edit?usp=sharing)
 - [2nd Meeting](https://docs.google.com/document/d/1BHU38LBqNfUzyalSOlNTanhcArzzrk5xeclM5rpWVGQ/edit?usp=sharing)
