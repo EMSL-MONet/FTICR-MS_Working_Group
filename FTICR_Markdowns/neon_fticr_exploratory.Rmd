@@ -16,10 +16,10 @@ library(see)
 library(ggforce)
 ```
 
-## *Initial Data Curation*
+### *Initial Data Curation*
 
-### *Read in Metadata and Land Cover Data*
-```{r message=FALSE}
+#### *Read in Metadata and Land Cover Data*
+```{r message=FALSE, include=FALSE}
 #Establish NEON sites included in 1000 soils project
 NEON_sites <- data.frame(c("STEI", "DSNY", "TALL", "JERC", "DELA", "OSBS", "PUUM", "TEAK", "SJER", "OAES", 
            "SOAP", "LENO", "CLBJ", "ONAQ", "MLBS", "ORNL", "KONA", "KONZ", "GRSM", "UKFS", 
@@ -53,13 +53,13 @@ rm(neon_field, Land_Cover)
 
 ```
 
-### *Read in FTICR-MS data and generate relevant moleular information*
+#### *Read in FTICR-MS data and generate relevant moleular information*
 This section reads in FTICRMS data from 1000 soils project. It then separates into 2 data frames - 1 called 'mol' that contains the molecular properties data for all of the peaks identified in the data set. This information is calculated from the elemental formula identified within the dataset. 
 
 The second dataframe is called data which contains the presence absence of individual identified peaks within each sample. 
 
-Disclaimer: This section bins FTICRMS data into common biomolecular classes based on groupings by Seidel et al., 2014. It is important to recognize that relating a molecular formula to one of these biomolecular classes DOES NOT confirm structure for that molecular formula, it ONLY indicates a stoichiometric similarity to what would be reasonably expected for those types of biomolecules. 
-```{r read in fticrms data}
+Disclaimer: This section bins FTICRMS data into common biomolecular classes based on groupings by Kim et al., 2003. It is important to recognize that relating a molecular formula to one of these biomolecular classes DOES NOT confirm structure for that molecular formula, it ONLY indicates a stoichiometric similarity to what would be reasonably expected for those types of biomolecules. 
+```{r read in fticrms data, include=FALSE}
 
 #Read in fticr data
 fticr <- read.csv('../Input_Data/icr_v2_corems2.csv')
@@ -82,17 +82,28 @@ mol <- fticr %>%
          AImod = ifelse(is.na(AImod),0,AImod),
          AImod = ifelse(AImod == "Inf",0,AImod),
          AImod = ifelse(AImod == "-Inf",0,AImod),
-         CondHC = if_else(AImod > 0.66 & HC < 1.5, paste0("condensed aromatic"), as.character(NA)),
-         Aromatic = if_else(AImod <= 0.66 & AImod >0.5 & HC < 1.5, paste0("aromatic"), as.character(NA)),
-         Lignin = if_else(AImod <= 0.5 & HC < 1.5, paste0("unsaturated/lignin"), as.character(NA)),
-         Carbohydrate = if_else(HC >= 2.0 & OC >= 0.9, paste0("carbohydrate"), as.character(NA)),
-         Lipid = if_else(HC >= 2.0 & OC < 0.9, paste0("lipid"), as.character(NA)),
-         Aliphatic = if_else(HC < 2.0 & HC >=1.5 & N == 0, paste0("aliphatic"), as.character(NA)),
-         Aliphatic_N = if_else(HC < 2.0 & HC >= 1.5 & N > 0, paste0("aliphatic_N"), as.character(NA)),
-         Class = paste0(CondHC, Aromatic, Lignin, Carbohydrate, Lipid, Aliphatic, Aliphatic_N),
-         Class  = str_replace_all(Class,"NA",""))%>%
-  dplyr::select(-c(CondHC, Aromatic, Lignin, Carbohydrate, Lipid, Aliphatic, Aliphatic_N))
-
+         NOSC =  round(4-(((4*C)+H-(3*N)-(2*O)-(2*S))/C),4),
+         GFE = 60.3-(28.5*NOSC),
+         Class = case_when(
+             HC >=1.55 & HC <= 2.25 & OC >= 0 & OC <= 0.3 ~"Lipid",
+             HC >=0.7 & HC <= 1.5 & OC >= 0.05 & OC <= 0.15 ~"Unsat Hydrocarbon",
+             HC >=1.45 & HC <= 2 & OC >= 0.3 & OC <= 0.55 ~"Protein",
+             HC >=0.81 & HC <= 1.45 & OC >= 0.28 & OC <= 0.65 ~"Lignin",
+             HC >=1.48 & HC <= 2.15 & OC >= 0.68 & OC <= 1 ~"Carbohydrate",
+             HC >=1.34 & HC <= 1.8 & OC >= 0.54 & OC <= 0.71 ~"Amino Sugar",
+             HC >=0.7 & HC <= 1.3 & OC >= 0.65 & OC <= 1.05 ~"Tannin",
+             HC >=0.3 & HC <= 0.81 & OC >= 0.12 & OC <= 0.7 ~"Cond Hydrocarbon",
+             TRUE ~ "Other"),
+         El_form = case_when(
+             N > 0 & S == 0 & P == 0 ~ "CHON",
+             N == 0 & S > 0 & P == 0 ~ "CHOS",
+             N == 0 & S == 0 & P > 0 ~ "CHOP",
+             N > 0 & S > 0 & P == 0 ~ "CHONS",
+             N > 0 & S == 0 & P > 0 ~ "CHONP",
+             N == 0 & S > 0 & P == 0 ~ "CHOSP",
+             N > 0 & S > 0 & P == 0 ~ "CHONSP",
+             TRUE ~ "CHO"),)
+  
 #Create dataframe called 'data' that contains presence/absence information for individual peaks within each sample
 data <- fticr %>%
   rename(formula = X,
@@ -117,8 +128,8 @@ rm(data,fticr, NEON_sites)
 
 ```
 
-### *Read in 1000 soils geochemistry data*
-```{r}
+#### *Read in 1000 soils geochemistry data*
+```{r, include=FALSE}
 #read in geochem_data
 geo_chem = read_excel('../Input_Data/1000S_Dataset_Biogeochem_Biomass_Tomography_WEOM_2023_06_12.xlsx')
 
@@ -147,37 +158,47 @@ geo_chem <- geo_chem %>%
 ```
 
 
-### *Calculate Sample-level FTICRMS molecular properties*
+#### *Calculate Sample-level FTICRMS molecular properties*
 This section calculates the average molecular properties for each individual sample. For instance, a single sample may have 1000 identified formula, each assigned a carbon value. The sample average is the average carbon value from those 1000 identified molecular formula. Note, each sample will have variable amounts of identified formula. The average is unique only to what is present in the sample. 
-```{r pressure, echo=FALSE}
-#Create blank vectors to be used in the loop below
-Mass <- numeric()
-C <- numeric()
-H <- numeric()
-O <- numeric()
-N <- numeric()
-S <- numeric()
-DBE <- numeric()
-AImod <- numeric()
-NOSC <- numeric()
-OC <- numeric()
-HC <- numeric()
-
-#run loop to calcualte average molecular properties - creates a new data frame called "mol_properties_average" that contains all data
-for(i in 1:ncol(data_neon)){
- Mass <- c(Mass,sum(mol$mass*data_neon[,i])/sum(data_neon[,i]))
- C <- c(C,sum(mol$C*data_neon[,i])/sum(data_neon[,i]))
- H <- c(H,sum(mol$H*data_neon[,i])/sum(data_neon[,i]))
- O <- c(O,sum(mol$O*data_neon[,i])/sum(data_neon[,i]))
- N <- c(N,sum(mol$N*data_neon[,i])/sum(data_neon[,i]))
- S <- c(S,sum(mol$S*data_neon[,i])/sum(data_neon[,i]))
- DBE <- c(DBE,sum(mol$DBE*data_neon[,i])/sum(data_neon[,i]))
- AImod <- c(AImod,sum(mol$AImod*data_neon[,i])/sum(data_neon[,i]))
- NOSC <- c(NOSC,sum(mol$NOSC*data_neon[,i])/sum(data_neon[,i]))
- OC <- c(OC,sum(mol$OC*data_neon[,i])/sum(data_neon[,i]))
- HC <- c(HC,sum(mol$HC*data_neon[,i])/sum(data_neon[,i]))
- mol_properties_average <- data.frame(Mass,C,H,O,N,S,DBE,AImod,NOSC,OC,HC)
+```{r pressure, echo=FALSE, include=FALSE}
+# Define a function to calculate intensity weighted means (If presence-absence, this will simply be average means)
+# This function is for the following molecular properties: Mass, C, H, O, N, S, AImod, DBE, NOSC, O/C, H/C
+calculate_weighted_means <- function(column, weights) {
+  sum(column * weights) / sum(weights)
 }
+
+# Create dataframe with weighted FTICRMS molecular properties data
+mol_properties_average <- data_neon %>%
+  summarise(
+#Calculate the mean for molecular properties using the function above. If using intensity based data, these will be intensity weighted. If using presence absence based data, these will simply be average means. 
+    Mass = apply(., 2, function(x) calculate_weighted_means(mol$mass, x)),
+    C = apply(., 2, function(x) calculate_weighted_means(mol$C, x)),
+    H = apply(., 2, function(x) calculate_weighted_means(mol$H, x)),
+    O = apply(., 2, function(x) calculate_weighted_means(mol$O, x)),
+    N = apply(., 2, function(x) calculate_weighted_means(mol$N, x)),
+    S = apply(., 2, function(x) calculate_weighted_means(mol$S, x)),
+    AImod = apply(., 2, function(x) calculate_weighted_means(mol$AImod, x)),
+    DBE = apply(., 2, function(x) calculate_weighted_means(mol$DBE, x)),
+    NOSC = apply(., 2, function(x) calculate_weighted_means(mol$NOSC, x)),
+    OC = apply(., 2, function(x) calculate_weighted_means(mol$OC, x)),
+    HC = apply(., 2, function(x) calculate_weighted_means(mol$HC, x)),
+#Calculate the elemental diversity - as in the percentage of formula identified as CHOX. These are not intensity weighted
+    CHO_percent = apply(., 2, function(x) sum(x[mol$El_form == 'CHO'] !=0)*100/sum(x != 0)),
+    CHON_percent = apply(., 2, function(x) sum(x[mol$El_form == 'CHON'] !=0)*100/sum(x != 0)),
+    CHOS_percent = apply(., 2, function(x) sum(x[mol$El_form == 'CHOS'] !=0)*100/sum(x != 0)),
+#Calculate the Compound class diversity - as in the percentage of formula identified as lipid, etc. These are not intensity   weighted
+    Lipid_percent = apply(., 2, function(x) sum(x[mol$Class == 'Lipid'] !=0)*100 / sum(x)),
+    UnsatHydrocarbon_percent = apply(., 2, function(x) sum(x[mol$Class == 'Unsat Hydrocarbon'] !=0)*100 / sum(x!=0)),
+    Protein_percent = apply(., 2, function(x) sum(x[mol$Class == 'Protein'] !=0)*100 / sum(x!=0)),
+    Lignin_percent = apply(., 2, function(x) sum(x[mol$Class == 'Lignin'] !=0)*100 / sum(x!=0)),
+    Carbohydrate_percent = apply(., 2, function(x) sum(x[mol$Class == 'Carbohydrate'] !=0)*100 / sum(x!=0)),
+    AminoSugar_percent = apply(., 2, function(x) sum(x[mol$Class == 'Amino Sugar'] !=0)*100 / sum(x!=0)),
+    Tannin_percent = apply(., 2, function(x) sum(x[mol$Class == 'Tannin'] !=0)*100 / sum(x!=0)),
+    CondHydrcarbon_percent = apply(., 2, function(x) sum(x[mol$Class == 'Cond Hydrocarbon'] !=0)*100 / sum(x!=0))
+  )%>%
+  mutate(Sample = names(data_neon))%>%
+  select(Sample, everything())
+
 
 #Modify data frame by renaming important columns, reordering columns, and making separate columns for the name and the soil layer (top or bottom)
 mol_properties_average <- mol_properties_average %>%
@@ -193,72 +214,32 @@ geo_chem <- geo_chem%>%
 # write.csv(mol_properties_average, file="FTICR_Outputs/FTICR_Molecular_Indices.csv", row.names=FALSE)
 
 #Remove clutter from workspace
-rm(C,DBE,H,HC,i,Mass,N,NOSC,O,OC,AImod, S)
+rm(calculate_weighted_means)
 ```
 
 
-### *Calculate Sample-level FTICRMS Compound Classes Percentages*
-This section calculates the of individual molecular formulae identifed as a part of the individual biomolecular compound classes defined above. For instance, a single sample may have 1000 identified formula. If 250 of those are categorized as 'lignin', then the percentage of 'lignin' compounds is 25%. Note the disclaimer 3 chunks back in relation to the interpretation of biomolecular classes.  
+### Question 1: How spatially variable is water extractable SOM composition at the CONUS scale? What are the drivers of such variability?
+#### **Hypothesis 1: Land cover/Land use are important drivers of SOM composition variability. (e.g., distinct compositional differences between forest and grasslands)**
 
-```{r}
-
-#Create blank vectors to be used in the loop below
-condensed_aromatic_perc <- numeric()
-aromatic_perc <- numeric()
-unsaturated_lignin_perc <- numeric()
-carbohydrate_perc <- numeric()
-lipid_perc <- numeric()
-aliphatic_perc <- numeric()
-aliphatic_N_perc <- numeric()
-
-#run loop to calcualte average compound classes - creates a new data frame called "perc_classes" that contains all data
-for(i in 1:ncol(data_neon)){
-    condensed_aromatic_perc <- c(condensed_aromatic_perc,sum(data_neon[which(mol$Class=='condensed aromatic'),i])*100/sum(data_neon[,i]))
-    aromatic_perc <- c(aromatic_perc,sum(data_neon[which(mol$Class=='aromatic'),i])*100/sum(data_neon[,i]))
-    unsaturated_lignin_perc <- c(unsaturated_lignin_perc,sum(data_neon[which(mol$Class=='unsaturated/lignin'),i])*100/sum(data_neon[,i]))
-    carbohydrate_perc <- c(carbohydrate_perc,sum(data_neon[which(mol$Class=='carbohydrate'),i])*100/sum(data_neon[,i]))
-    lipid_perc <- c(lipid_perc,sum(data_neon[which(mol$Class=='lipid'),i])*100/sum(data_neon[,i]))
-    aliphatic_perc <- c(aliphatic_perc,sum(data_neon[which(mol$Class=='aliphatic'),i])*100/sum(data_neon[,i]))
-    aliphatic_N_perc <- c(aliphatic_N_perc,sum(data_neon[which(mol$Class=='aliphatic_N'),i])*100/sum(data_neon[,i]))
-    perc_classes <- data.frame(condensed_aromatic_perc,aromatic_perc,unsaturated_lignin_perc,carbohydrate_perc,lipid_perc,aliphatic_perc, aliphatic_N_perc)
-}
-
-#Modify data frame by renaming important columns, reordering columns, and making separate columns for the name and the soil layer (top or bottom)
-perc_classes <- perc_classes %>%
-  mutate(Sample_ID = colnames(data_neon))%>%
-  select(Sample_ID,everything())%>%
-  separate(Sample_ID, into = c("Sample_ID","Layer"), sep = "_", remove = FALSE)
-
-#Write Molelcuar properties to csv if desired
-# write.csv(perc_classes, file="FTICR_Outputs/FTICR_Chemical_Classes_Percents.csv", row.names=FALSE)
-
-#Remove clutter from workspace
-rm(condensed_aromatic_perc,aromatic_perc,unsaturated_lignin_perc,i,carbohydrate_perc,lipid_perc,aliphatic_perc, aliphatic_N_perc) 
-
-```
-
-
-## *Question 1: How spatially variable is water extractable SOM composition at the CONUS scale? What are the drivers of such variability?*
-### *H1: Land cover/Land use are important drivers of SOM composition variability. (e.g., distinct compositional differences between forest and grasslands)*
-
-#### *Figure 1: Density plot showing distribution of sites by land cover*
-```{r}
+##### *Figure 1: Density plot showing distribution of sites by land cover*
+```{r, echo=FALSE, fig.height=4, fig.width=5}
 #Provide a count for the number of of the different land cover types used in the dataset
 metadata %>%
   mutate(land_cover = reorder(land_cover, land_cover, function(x)-length(x)))%>%
   ggplot(aes(x=land_cover, fill=land_cover))+
   geom_bar(alpha=0.7)+
-  theme_light()+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle=20, hjust=1))+
   labs(x="Land Cover Type", y="Count", fill="Land Cover")
 
 
 ```
 
 
-#### *Figure 2: NMDS evaluating distribution of sites based on their molecular make-up (FTICR-MS) and relationships with land use*
+##### *Figure 2: NMDS evaluating distribution of sites based on their molecular make-up (FTICR-MS) and relationships with land use*
 
 ##### *Perform NMDS ordination analysis*
-```{r}
+```{r, results=FALSE, message=FALSE, warning=FALSE, echo=FALSE}
 set.seed(1988) #Ensure consisten NMDS runs when repeated
 
 #Run NMDS using Jaccard distance for the presence/absence data (If we had intensity based data, we would use Bray-Curtis and would need to transfor prior to Hellinger)
@@ -278,7 +259,7 @@ rm(nmds.fortify, envfit)
 ```
 
 ##### *Create Individual Figures for the top and bottom layers*
-```{r, fig.height=4, fig.width=3.75, warning=FALSE}
+```{r, warning=FALSE, echo=FALSE, fig.height=5, fig.width=8}
 #Set consistent theme among plots
 theme <- theme(panel.grid.major=element_blank(),
         panel.grid.minor=element_blank(),
@@ -295,7 +276,7 @@ theme <- theme(panel.grid.major=element_blank(),
         plot.title=element_text(hjust=0.5))
 
 #Create graph to plot NMDS scores for the TOP layer only
-geo_chem%>%
+top_plot <- geo_chem%>%
   left_join(sites, by = "Sample_ID")%>%
   filter(Location=="TOP")%>%
   ggplot()+
@@ -317,7 +298,7 @@ geo_chem%>%
 
 
 #Create graph to plot NMDS scores for the BTM layer only
-geo_chem%>%
+btm_plot <- geo_chem%>%
   left_join(sites, by = "Sample_ID")%>%
   filter(Location=="BTM")%>%
   ggplot()+
@@ -337,72 +318,108 @@ geo_chem%>%
   theme_light()+theme+
   guides(colour=guide_legend(nrow=2))
 
-rm(envfit.correlations)
+#Combine plots
+egg::ggarrange(top_plot, btm_plot, ncol=2, heights=c(5),widths=c(4,4), 
+                                   labels=c("A","B"),
+                                   label.args = list(gp=grid::gpar(font=1, fontsize=24), x=unit(0.10,"in"), hjust=0, vjust=2.0))
+
+rm(envfit.correlations, top_plot, btm_plot)
 
 ```
 
-#### *Figure 3: Boxplots of various FTICRMS molecular properties*
+##### *Figure 3: Boxplots of FTICRMS molecular properties for BTM layer*
 ##### *Generate function for baseline boxplot graphs*
 This chunk creates a generic ggplot code that will be applied to make a number of equivalent graphs where the only variable changing is the y-axis
-```{r}
+```{r, echo=FALSE}
 #Note inputs for this function: data=metadata, x=Layer, y= "Parameter of Interest"
-plot_v1 <- function(data,x,y) {
-  ggplot(data=data, aes(x={{x}}, y={{y}}))+
-    geom_boxplot()+
-    #scale_colour_manual(values=col_order)+
-    labs(x = "Layer", y=ylab)+
-    theme_bw()+
-    theme(legend.position="none", 
-        plot.title =  element_blank(),
-        axis.text=element_text(size=12, color="black"),
-        axis.title=element_text(size=12),
-        axis.title.x = element_text(size=12),
-        axis.title.y = element_text(margin=ggplot2::margin(t=0,r=5,b=0,l=0)),
-        axis.text.x = element_text(size=12),
-        strip.text = element_text(size = 10, color= "black"),
-        strip.background = element_rect(colour="black"))
+# plot_v1 <- function(data,x,y) {
+#   data %>%
+#     filter(Layer == "BTM")%>%
+#     filter(land_cover %in% c("Shrub_Grassland","Forest"))%>%
+#   ggplot(data=data, aes(x={{x}}, y={{y}}))+
+#     geom_boxplot()+
+#     #scale_colour_manual(values=col_order)+
+#     labs(x = "Land Cover", y=ylab)+
+#     theme_bw()+
+#     theme(legend.position="none", 
+#         plot.title =  element_blank(),
+#         axis.text=element_text(size=12, color="black"),
+#         axis.title=element_text(size=12),
+#         axis.title.x = element_text(size=12),
+#         axis.title.y = element_text(margin=ggplot2::margin(t=0,r=5,b=0,l=0)),
+#         axis.text.x = element_text(size=12),
+#         strip.text = element_text(size = 10, color= "black"),
+#         strip.background = element_rect(colour="black"))
+# }
+
+#Note inputs for this function: data=metadata, x=Layer, y= "Parameter of Interest"
+plot_v1 <- function(data, x, y) {
+  data %>%
+    filter(Layer == "BTM") %>%
+    filter(land_cover %in% c("Shrub_Grassland", "Forest")) %>%
+    ggplot(aes(x = {{x}}, y = {{y}})) +
+    geom_boxplot() +
+    labs(x = "Land Cover", y = ylab) +
+    theme_bw() +
+    theme(
+      legend.position = "none",
+      plot.title = element_blank(),
+      axis.text = element_text(size = 12, color = "black"),
+      axis.title = element_text(size = 12),
+      axis.title.x = element_text(size = 12),
+      axis.title.y = element_text(margin = ggplot2::margin(t = 0, r = 5, b = 0, l = 0)),
+      axis.text.x = element_text(size = 12),
+      strip.text = element_text(size = 10, color = "black"),
+      strip.background = element_rect(colour = "black")
+    )
 }
 ```
 
 ##### *Generate boxplots*
-```{r, fig.height=3.5, fig.width=3.75}
+```{r, fig.height=10.5, fig.width=11.25, echo=FALSE}
 
 ylab = "mass"
-plot_v1(mol_properties_average,Layer,Mass)
+mass_plot <- plot_v1(geo_chem,land_cover,Mass)
 
 ylab = "C"
-plot_v1(mol_properties_average,Layer,C)
+c_plot <- plot_v1(geo_chem,land_cover,C)
 
 ylab = "H"
-plot_v1(mol_properties_average,Layer,H)
+h_plot <- plot_v1(geo_chem,land_cover,H)
 
 ylab = "O"
-plot_v1(mol_properties_average,Layer,O)
+o_plot <- plot_v1(geo_chem,land_cover,O)
 
 ylab = "N"
-plot_v1(mol_properties_average,Layer,N)
+n_plot <- plot_v1(geo_chem,land_cover,N)
 
 ylab = "S"
-plot_v1(mol_properties_average,Layer,S)
+s_plot <- plot_v1(geo_chem,land_cover,S)
 
 ylab = "DBE"
-plot_v1(mol_properties_average,Layer,DBE)
+dbe_plot <- plot_v1(geo_chem,land_cover,DBE)
 
 ylab = "H/C"
-plot_v1(mol_properties_average,Layer,HC)
+hc_plot <- plot_v1(geo_chem,land_cover,HC)
 
 ylab = "O/C"
-plot_v1(mol_properties_average,Layer,OC)
+oc_plot <- plot_v1(geo_chem,land_cover,OC)
 
-rm(plot_v1, ylab)
+
+egg::ggarrange(mass_plot, c_plot, h_plot, o_plot,n_plot,s_plot,dbe_plot,hc_plot,oc_plot,
+               ncol=3, heights=c(3.5,3.5,3.5),widths=c(3.75,3.75,3.75), 
+               labels=c("A","B","C","D","E","F","G","H","I"),
+               label.args = list(gp=grid::gpar(font=1, fontsize=20), x=unit(0.10,"in"), hjust=0, vjust=2.0))
+
+rm(plot_v1, ylab, mass_plot, c_plot, h_plot, o_plot,n_plot,s_plot,dbe_plot,hc_plot,oc_plot)
 
 ```
 
-### *Hypothesis 2: Soil texture wil influence C availability and composition. Higher clay content will lead to lower WEOM concentrations and different composition than sand dominated soils*
+#### **Hypothesis 2: Soil texture will influence C availability and composition. Higher clay content will lead to lower WEOM concentrations and different composition than sand dominated soils**
 
-#### *Figure 4a: Soil Texture Density Plots*
+##### *Figure 4a: Soil Texture Density Plots*
 
-```{r}
+```{r, echo=FALSE}
 # Generate soil texture density plots faceted by top and bottom layers
 geo_chem %>%
   mutate(Location = factor(Location, levels = c("TOP","BTM")))%>%
@@ -418,22 +435,22 @@ geo_chem %>%
 
 ```
 
-#### *Figure 4b: Soil Texture as a function of Land Use*
+##### *Figure 4b: Soil Texture as a function of Land Use*
 
-```{r}
+```{r, echo=FALSE, fig.height = 3.5, fig.width=4}
 #Create set of box plots that show the distribution of different soil texture types by land cover
-ggplot(data=geo_chem)+geom_boxplot(aes(x=land_cover, y=Sand_pct))+facet_wrap(~Location)
-ggplot(data=geo_chem)+geom_boxplot(aes(x=land_cover, y=Silt_pct))+facet_wrap(~Location)
-ggplot(data=geo_chem)+geom_boxplot(aes(x=land_cover, y=Clay_pct))+facet_wrap(~Location)
+ggplot(data=geo_chem)+geom_boxplot(aes(x=land_cover, y=Sand_pct))+facet_wrap(~Location)+theme_bw()+theme(axis.text.x = element_text(angle = 20, hjust=1))
+ggplot(data=geo_chem)+geom_boxplot(aes(x=land_cover, y=Silt_pct))+facet_wrap(~Location)+theme_bw()+theme(axis.text.x = element_text(angle = 20, hjust=1))
+ggplot(data=geo_chem)+geom_boxplot(aes(x=land_cover, y=Clay_pct))+facet_wrap(~Location)+theme_bw()+theme(axis.text.x = element_text(angle = 20, hjust=1))
 ```
 
 
-#### *Figure 5: NMDS with soil texture features*
+##### *Figure 5: NMDS with soil texture features*
 Note, this will use previously created NMDS, but will simply have the soil texture features envirofitted onto the graph. Only features significant to p < 0.05 will be displayed. 
 
 In this case, Clay percentage is only signficant and is very weak (p = 0.04)
 
-```{r}
+```{r, echo=FALSE, fig.height = 5, fig.width=4, echo=FALSE, warning=FALSE}
 #Isoltate soil texture features
 soil_text <- geo_chem%>%
   mutate_at(vars(Sand_pct, Silt_pct, Clay_pct), as.numeric)%>%
@@ -451,7 +468,7 @@ geo_chem%>%
   ggplot()+
   geom_abline(intercept=0, slope=0, linetype="dashed", size=0.8, colour="gray")+
   geom_vline(aes(xintercept=0), linetype="dashed", size=0.8, colour="gray")+
-  geom_point(aes(x=NMDS1, y=NMDS2),size=3)+
+  geom_point(aes(x=NMDS1, y=NMDS2, colour=land_cover),size=3)+
   geom_segment(data=envfit.correlations, aes(x=0, y=0,xend=NMDS1, yend=NMDS2),
                arrow=arrow(length=unit(0.015, "npc"),
                            type="closed"),
@@ -467,9 +484,10 @@ geo_chem%>%
 
 ```
 
-#### *Figure 6: Molecular Properties as a funciton of soil texture*
+##### *Figure 6: Molecular Properties as a funciton of soil texture*
 Here, plotted Aromaticity index, H/C ratio, O/C ratio, and N as a function of Clay and Sand percentages - No clear relationships stand out between the soil texture and molecular properties. 
-```{r}
+
+```{r, fig.height=3.5, fig.width=4, echo=FALSE}
 #Create a set of X-Y plots for Molecular properties as a function of clay percent
 ggplot(data=geo_chem)+geom_point(aes(x=Clay_pct,y=AImod))
 ggplot(data=geo_chem)+geom_point(aes(x=Clay_pct,y=HC))
