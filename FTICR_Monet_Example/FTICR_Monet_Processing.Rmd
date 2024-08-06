@@ -57,7 +57,6 @@ process_file <- function(file) {
            H.C = round(H.C, 2),
            O.C = round(H.C, 2),
            )
-  
 }
 
 ```
@@ -70,12 +69,26 @@ This code runs the above FTICR processing function and merges all samples into a
 # Process each file and store in a list
 processed_files <- map(files, process_file)
 
+
 # Merge all data frames by Molecular Formula, rearrange dataframe to include relevant FTICR information followed by sample data
-merged_data <- reduce(processed_files, full_join, by = "Molecular.Formula") %>%
+merged_data <- reduce(processed_files[1:2], full_join, by = "Molecular.Formula")%>%
   mutate(across(ends_with(".x"), 
                ~ coalesce(., get(sub(".x$", ".y", cur_column()))),
                .names = "{sub('.x$', '', col)}")) %>%
-  dplyr::select(-ends_with(".x"), -ends_with(".y")) %>%
+  dplyr::select(-ends_with(".x"), -ends_with(".y"))
+
+if(length(processed_files) > 2) { 
+  for (i in 3:length(processed_files)) {
+  merged_data <- full_join(merged_data, processed_files[[i]], by = "Molecular.Formula")%>%
+    mutate(across(ends_with(".x"), 
+               ~ coalesce(., get(sub(".x$", ".y", cur_column()))),
+               .names = "{sub('.x$', '', col)}")) %>%
+  dplyr::select(-ends_with(".x"), -ends_with(".y"))
+  }
+}
+
+# Reorder merged data frame
+merged_data <- merged_data %>%
   rename(Mass = m.z) %>%
   select(Mass, Molecular.Formula, Heteroatom.Class, El_form, Class, C:P, H.C,O.C,DBE,AImod:GFE, everything())
 
@@ -102,7 +115,7 @@ rm(merged_data, processed_files, files, process_file)
 
 ## Calculate Sample Average Molecular Properties
 
-```{r}
+```{r, warning=FALSE}
 
 
 # Define a function to calculate intensity weighted means (If presence-absence, this will simply be average means)
