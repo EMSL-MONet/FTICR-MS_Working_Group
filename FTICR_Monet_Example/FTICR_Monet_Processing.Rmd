@@ -55,7 +55,7 @@ process_file <- function(file) {
            AImod = ifelse(AImod == "Inf",0,AImod),
            AImod = ifelse(AImod == "-Inf",0,AImod),
            H.C = round(H.C, 2),
-           O.C = round(H.C, 2),
+           O.C = round(O.C, 2),
            )
 }
 
