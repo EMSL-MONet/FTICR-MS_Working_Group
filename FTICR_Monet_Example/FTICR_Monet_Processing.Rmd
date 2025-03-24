@@ -45,20 +45,22 @@ process_file <- function(file) {
              N == 0 & S == 0 & P > 0 ~ "CHOP",
              N > 0 & S > 0 & P == 0 ~ "CHONS",
              N > 0 & S == 0 & P > 0 ~ "CHONP",
-             N == 0 & S > 0 & P == 0 ~ "CHOSP",
-             N > 0 & S > 0 & P == 0 ~ "CHONSP",
+             N == 0 & S > 0 & P > 0 ~ "CHOSP",
+             N > 0 & S > 0 & P > 0 ~ "CHONSP",
              TRUE ~ "CHO"),
-           AImod = round((1+C-(0.5*O)-S-(0.5*(N+P+H)))/(C-(0.5*O)-S-N-P),4),
-           NOSC =  round(4-(((4*C)+H-(3*N)-(2*O)-(2*S))/C),4),
-           GFE = 60.3-(28.5*NOSC),
+           AImod_num = 1 + C - (0.5 * O) - S - (0.5 * (N + P + H)),
+           AImod_denom = C - (0.5 * O) - S - N - P,
+           AImod = ifelse(AImod_denom <= 0 | AImod_num <= 0, 0, round(AImod_num / AImod_denom, 4)),
+           AImod = ifelse(is.na(AImod), 0, AImod),
            AImod = ifelse(is.na(AImod),0,AImod),
            AImod = ifelse(AImod == "Inf",0,AImod),
            AImod = ifelse(AImod == "-Inf",0,AImod),
+          NOSC = round(4 - ((4*C + H - 3*N - 2*O + 5*P - 2*S)/C),4),
+           GFE = 60.3-(28.5*NOSC),
            H.C = round(H.C, 2),
            O.C = round(O.C, 2),
            )
 }
-
 ```
 
 
